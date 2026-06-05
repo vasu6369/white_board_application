@@ -240,7 +240,8 @@ function App() {
       } else if (event.ctrlKey && event.key.toLowerCase() === 'd') {
         event.preventDefault();
         downloadBoard();
-      } else if (event.key === '?') {
+      } else if (event.key === '?' || (event.shiftKey && event.key === '/')) {
+        event.preventDefault();
         setShowShortcuts(true);
       } else if (!event.ctrlKey && !event.metaKey && !event.altKey) {
         const keyToolMap = {
@@ -327,6 +328,7 @@ function App() {
           onCopyRoomId={copyRoomId}
           onCopyRoomLink={copyRoomLink}
           onLeaveRoom={leaveRoom}
+          onShowShortcuts={() => setShowShortcuts(true)}
           paths={paths}
         />
 

@@ -21,7 +21,7 @@ const TYPE_LABELS = {
 
 export const Topbar = ({
   roomId, pathsLength, isConnected, users = [], stickyCount = 0,
-  copiedId, copiedLink, onCopyRoomId, onCopyRoomLink, onLeaveRoom, paths = [],
+  copiedId, copiedLink, onCopyRoomId, onCopyRoomLink, onLeaveRoom, onShowShortcuts, paths = [],
 }) => {
   const [statsOpen, setStatsOpen] = useState(false);
   const visibleUsers  = users.slice(0, 4);
@@ -58,6 +58,9 @@ export const Topbar = ({
             </div>
           )}
         </div>
+        <button className="shortcut-hint" type="button" onClick={onShowShortcuts}>
+          Press <kbd>?</kbd> for shortcuts
+        </button>
       </div>
 
       <div className="collab-panel" aria-label="Collaboration status">

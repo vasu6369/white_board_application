@@ -265,6 +265,139 @@ input {
   font-size: 0.94rem;
 }
 
+.shortcut-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
+  color: #64748b;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.shortcut-hint:hover {
+  color: #1d4ed8;
+}
+
+.shortcut-hint kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid rgba(23, 32, 51, 0.16);
+  border-radius: 6px;
+  color: #1d4ed8;
+  background: rgba(255, 255, 255, 0.82);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.82rem;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.shortcuts-modal {
+  width: min(520px, 100%);
+  max-height: min(680px, calc(100vh - 40px));
+  overflow: auto;
+  border: 1px solid rgba(23, 32, 51, 0.14);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+}
+
+.shortcuts-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(23, 32, 51, 0.1);
+  background: #ffffff;
+}
+
+.shortcuts-modal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #111827;
+  font-weight: 800;
+}
+
+.shortcuts-close-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(23, 32, 51, 0.14);
+  border-radius: 8px;
+  color: #334155;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.shortcuts-grid {
+  display: grid;
+  padding: 8px 16px 16px;
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 42px;
+  border-bottom: 1px solid rgba(23, 32, 51, 0.08);
+}
+
+.shortcut-action {
+  color: #334155;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.shortcut-keys {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+}
+
+.kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid rgba(23, 32, 51, 0.16);
+  border-radius: 6px;
+  color: #1d4ed8;
+  background: #eff6ff;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.shortcut-plus {
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 .collab-panel {
   display: flex;
   align-items: center;
@@ -558,6 +691,10 @@ canvas.select-active {
   .topbar p {
     margin: 0;
     font-size: 0.8rem;
+  }
+
+  .shortcut-hint {
+    display: none;
   }
 
   .collab-panel {

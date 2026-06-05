@@ -18,7 +18,7 @@ export const useSocket = (roomId, username, callbacks) => {
     const socket = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
     });
-
+    
     socketRef.current = socket;
 
     socket.on('connect', () => {
@@ -29,7 +29,6 @@ export const useSocket = (roomId, username, callbacks) => {
     socket.on('disconnect', () => {
       setIsConnected(false);
     });
-
     socket.on('board:init', (...args) => callbacksRef.current.onBoardInit?.(...args));
     socket.on('path:add', (...args) => callbacksRef.current.onPathAdd?.(...args));
     socket.on('path:update', (...args) => callbacksRef.current.onPathUpdate?.(...args));

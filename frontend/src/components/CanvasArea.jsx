@@ -1,5 +1,6 @@
 import React from 'react';
 import { ERASER_SCALE } from '../constants';
+import StickyNote from './StickyNote';
 
 export const CanvasArea = ({
   canvasRef,
@@ -16,7 +17,22 @@ export const CanvasArea = ({
   leaveCanvas,
   updateEraserCursor,
   commitText,
+  paths = [],
+  onUpdateSticky,
+  onDeleteSticky,
+  isDark,
 }) => {
+  const stickyNotes = paths
+    .filter((path) => path.tool === 'sticky')
+    .map((path) => ({
+      id: path.id,
+      x: path.points[0].x,
+      y: path.points[0].y,
+      text: path.text || '',
+      color: path.color,
+      colorIndex: path.colorIndex || 0,
+    }));
+
   return (
     <div className="canvas-wrap" ref={wrapperRef}>
       <canvas
@@ -77,6 +93,15 @@ export const CanvasArea = ({
           }}
         />
       ) : null}
+      {stickyNotes.map((note) => (
+        <StickyNote
+          key={note.id}
+          note={note}
+          isDark={isDark}
+          onUpdate={onUpdateSticky}
+          onDelete={onDeleteSticky}
+        />
+      ))}
     </div>
   );
 };

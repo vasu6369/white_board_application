@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useSocket } from './hooks/useSocket';
 import { useCanvas } from './hooks/useCanvas';
 import { getRoomFromUrl, createRoomId } from './utils/roomUtils';
@@ -7,6 +7,7 @@ import RoomEntry from './components/RoomEntry';
 import Topbar from './components/Topbar';
 import Toolbar from './components/Toolbar';
 import CanvasArea from './components/CanvasArea';
+import ShortcutsModal from './components/ShortcutsModal';
 
 function App() {
   const [roomId, setRoomId] = useState(getRoomFromUrl);
@@ -25,6 +26,19 @@ function App() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [fontFamily, setFontFamily] = useState('Inter, system-ui, sans-serif');
+  const [showShortcuts, setShowShortcuts] = useState(false);
+
+  const hydrateImages = useCallback((incomingPaths) => {
+    return incomingPaths.map((path) => {
+      if (path.tool !== 'image' || path._imgEl || !path.imgSrc) return path;
+
+      const image = new Image();
+      const hydratedPath = { ...path, _imgEl: image };
+      image.onload = () => setPaths((current) => [...current]);
+      image.src = path.imgSrc;
+      return hydratedPath;
+    });
+  }, []);
 
   // Hook 1: Socket synchronization and networking
   const {
@@ -36,19 +50,21 @@ function App() {
     disconnectSocket,
   } = useSocket(roomId, username, {
     onBoardInit: (serverPaths) => {
-      setPaths(serverPaths);
+      setPaths(hydrateImages(serverPaths));
       setRedoStack([]);
       setSelectedId(null);
       setTextEditor(null);
     },
     onPathAdd: (path) => {
-      setPaths((current) => (current.some((item) => item.id === path.id) ? current : [...current, path]));
+      const [hydratedPath] = hydrateImages([path]);
+      setPaths((current) => (current.some((item) => item.id === path.id) ? current : [...current, hydratedPath]));
     },
     onPathUpdate: (path) => {
-      setPaths((current) => current.map((item) => (item.id === path.id ? path : item)));
+      const [hydratedPath] = hydrateImages([path]);
+      setPaths((current) => current.map((item) => (item.id === path.id ? hydratedPath : item)));
     },
     onPathsReplace: (serverPaths) => {
-      setPaths(serverPaths);
+      setPaths(hydrateImages(serverPaths));
       setRedoStack([]);
       setSelectedId(null);
     },
@@ -80,6 +96,7 @@ function App() {
     downloadBoard,
     commitText,
     redraw,
+    handleImageUpload,
   } = useCanvas({
     tool,
     color,
@@ -175,6 +192,29 @@ function App() {
     emitBoardClear();
   };
 
+  const updateStickyNote = (note) => {
+    const updatedPath = {
+      id: note.id,
+      tool: 'sticky',
+      color: note.color || '#fef08a',
+      width: 1,
+      text: note.text,
+      colorIndex: note.colorIndex,
+      points: [{ x: note.x, y: note.y }],
+    };
+
+    setPaths((current) => current.map((path) => (path.id === note.id ? updatedPath : path)));
+    emitPathUpdate(updatedPath);
+  };
+
+  const deleteStickyNote = (noteId) => {
+    setPaths((current) => {
+      const next = current.filter((path) => path.id !== noteId);
+      emitPathsReplace(next);
+      return next;
+    });
+  };
+
   const copyRoomLink = async () => {
     await navigator.clipboard.writeText(window.location.href);
     setCopiedLink(true);
@@ -186,6 +226,57 @@ function App() {
     setCopiedId(true);
     setTimeout(() => setCopiedId(false), 2000);
   };
+
+  useEffect(() => {
+    const handleKey = (event) => {
+      if (!roomId || !username || textEditor) return;
+
+      if (event.ctrlKey && event.key.toLowerCase() === 'z') {
+        event.preventDefault();
+        undo();
+      } else if (event.ctrlKey && event.key.toLowerCase() === 'y') {
+        event.preventDefault();
+        redo();
+      } else if (event.ctrlKey && event.key.toLowerCase() === 'd') {
+        event.preventDefault();
+        downloadBoard();
+      } else if (event.key === '?') {
+        setShowShortcuts(true);
+      } else if (!event.ctrlKey && !event.metaKey && !event.altKey) {
+        const keyToolMap = {
+          p: 'pen',
+          h: 'highlighter',
+          e: 'eraser',
+          s: 'select',
+          t: 'text',
+          r: 'rectangle',
+          o: 'ellipse',
+          l: 'line',
+        };
+        const nextTool = keyToolMap[event.key.toLowerCase()];
+        if (nextTool) setTool(nextTool);
+        if (event.key.toLowerCase() === 'g') setShowGrid((current) => !current);
+      }
+    };
+
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [downloadBoard, roomId, textEditor, username]);
+
+  useEffect(() => {
+    const handlePaste = (event) => {
+      if (!roomId || !username || textEditor) return;
+
+      const imageItem = Array.from(event.clipboardData?.items || []).find((item) =>
+        item.type.startsWith('image/')
+      );
+      const imageFile = imageItem?.getAsFile();
+      if (imageFile) handleImageUpload(imageFile);
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [handleImageUpload, roomId, textEditor, username]);
 
   if (!roomId || !username) {
     return (
@@ -221,6 +312,8 @@ function App() {
         onToggleDark={() => setIsDark(!isDark)}
         fontFamily={fontFamily}
         setFontFamily={setFontFamily}
+        onShowShortcuts={() => setShowShortcuts(true)}
+        onImageUpload={handleImageUpload}
       />
 
       <section className="board-shell">
@@ -234,6 +327,7 @@ function App() {
           onCopyRoomId={copyRoomId}
           onCopyRoomLink={copyRoomLink}
           onLeaveRoom={leaveRoom}
+          paths={paths}
         />
 
         <CanvasArea
@@ -251,8 +345,13 @@ function App() {
           leaveCanvas={leaveCanvas}
           updateEraserCursor={updateEraserCursor}
           commitText={commitText}
+          paths={paths}
+          onUpdateSticky={updateStickyNote}
+          onDeleteSticky={deleteStickyNote}
+          isDark={isDark}
         />
       </section>
+      {showShortcuts ? <ShortcutsModal onClose={() => setShowShortcuts(false)} /> : null}
     </main>
   );
 }
